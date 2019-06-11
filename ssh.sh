@@ -34,14 +34,15 @@ read -p "是否需要修改SSH端口号（y/n）：" chpo
   ssh-add ~/.ssh/id_ed25519
   
   cat << EOF
-  请下载并删除id_ed25519
-  参考操作：
-  service sshd restart
-  vim /etc/ssh/sshd_config
-    PasswordAuthentication no
-    RSAAuthentication yes
-    PubkeyAuthentication yes
-    
-  EOF
+请下载并删除id_ed25519
+
+参考操作：
+service sshd restart
+vim /etc/ssh/sshd_config
+  PasswordAuthentication no
+  RSAAuthentication yes
+  PubkeyAuthentication yes
+
+EOF
   
   
