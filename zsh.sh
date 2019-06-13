@@ -179,12 +179,8 @@ if [[ "$omz_insd" = true ]]; then
 	echo -e "$green 已添加插件 zsh-syntax-highlighting$none"
 	echo
 	
-	var="plugins=\(git extract autojump history zsh-autosuggestions zsh-syntax-highlighting)"
+	var="plugins=(git extract autojump history zsh-autosuggestions zsh-syntax-highlighting)"
 	eval sed -i "/^plugins=/c'$var'" ~/.zshrc
-	[[ -s /root/.autojump/etc/profile.d/autojump.sh ]] && source /root/.autojump/etc/profile.d/autojump.sh
-
-        autoload -U compinit && compinit -u
-
 	
 	# 开启新的Z Shell继续执行
 	exec ./reload_zsh.sh
