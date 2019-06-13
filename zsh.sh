@@ -14,9 +14,17 @@ cat << EOF
 =========================================
 EOF
 
+
+echo -e "$green 下载脚本reload_zsh.sh$none"
+wget -c https://gist.githubusercontent.com/nescirem/d7d60d8e43989a82b1e5e2fdf94f1674/raw/145dccfe4ab88adc2aa38bd296160ca81de65d28/reload_zsh.sh -O reload_zsh.sh
+sudo chmod +x reload_zsh.sh
+cd ~
+
 echo -e "$green 当前Shell列表$none"
 sudo cat /etc/shells
+sleep 1
 echo
+sleep 2
 
 # 安装zsh
 if [[ -f /usr/bin/yum ]]; then
@@ -32,10 +40,13 @@ fi
 echo -e "$green 更新包管理器列表$none"
 eval $cmd update
 echo
+echo -e "$green 安装sudo$none"
+eval $cmd install sudo
+echo
 echo -e "$green 安装ZSH$none"
 eval $cmd install zsh
 echo
-echo -e "$green 切换到ZSH$none"
+echo -e "$green 将用户Shell切换到ZSH$none"
 sudo usermod -s /bin/zsh $USER
 echo
 
@@ -46,13 +57,46 @@ eval $cmd install git
 echo
 
 
-# 选择安装oh-my-zsh
-read -p "$(echo -e "$cyan 是否安装oh-my-zsh(Y/n):$none ")" chpo;chpo=${chpo:-y};
-if [[ $chpo == y || $chpo == Y ]]; then
+# 检测oh-my-zsh以及插件安装状态
+if [[ -d ~/.oh-my-zsh  ]]; then
+	omz_insd=true
+	if [[ -d ~/.oh-my-zsh/custom/plugins/autojump  ]]; then
+		aj_insd=true
+	fi
+	if [[ -d ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions  ]]; then
+		za_insd=true
+	fi
+	if [[ -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting  ]]; then
+		zshl_insd=true
+	fi
+fi
 
-	git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh 
-	sudo cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+# 选择安装oh-my-zsh
+if [[ "$omz_insd" = true ]]; then
+	read -p "$(echo -e "$cyan 是否重新安装oh-my-zsh(y/N):$none ")" chpo;chpo=${chpo:-n};
+	until [[ $chpo =~ ^([y]|[n]|[Y]|[N])$ ]]; do
+		read -p "$(echo -e "$cyan 是否重新安装oh-my-zsh(y/N):$none ")" chpo;chpo=${chpo:-n};
+	done
 	
+	if [[ $chpo == y || $chpo == Y ]]; then
+		sudo rm -rf ~/.oh-my-zsh
+		za_insd=false
+		zsh_insd=false
+		git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh 
+		sudo cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+		ZSH_CUSTOM="~/.oh-my-zsh/custom"
+	fi
+else
+	read -p "$(echo -e "$cyan 是否安装oh-my-zsh(Y/n):$none ")" chpo;chpo=${chpo:-y};
+	if [[ $chpo == y || $chpo == Y ]]; then
+		git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh 
+		sudo cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+		omz_insd=true
+		ZSH_CUSTOM="~/.oh-my-zsh/custom"
+	fi
+fi
+
+if [[ "$omz_insd" = true ]]; then
 	read -p "$(echo -e "$cyan 是否恢复配置(y/N):$none ")" chre;chre=${chre:-n};
 	if [[ $chre == y || $chre == Y ]]; then
 		if [ `command -v wget`  ];then
@@ -63,17 +107,87 @@ if [[ $chpo == y || $chpo == Y ]]; then
 	fi
 	# 添加插件
 	echo -e "$green 添加插件: autojump, zsh-autosuggestions, zsh-syntax-highlighting$none"
-	eval $cmd install autojump
-	echo -e "$green 已添加插件 autojump"
-	git clone git://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-	echo -e "$green 已添加插件 zsh-autosuggestions$none"
-	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-	echo -e "$green 已添加插件 zsh-syntax-highlighting$none"
-	plugins=(git extract autojump history zsh-autosuggestions zsh-syntax-highlighting)
+	echo
+	if [[ "$aj_insd" = true ]]; then
+		read -p "$(echo -e "$cyan 是否重新安装插件autojump(y/N):$none ")" chpo;chpo=${chpo:-n};
+		until [[ $chpo =~ ^([y]|[n]|[Y]|[N])$ ]]; do
+			read -p "$(echo -e "$cyan 是否重新安装插件autojump(y/N):$none ")" chpo;chpo=${chpo:-n};
+		done
+		if [[ $chpo == y || $chpo == Y ]]; then
+			sudo rm -rf ${ZSH_CUSTOM}/plugins/autojump
+			git clone git://github.com/wting/autojump.git ${ZSH_CUSTOM}/plugins/autojump
+			cd ${ZSH_CUSTOM}/plugins/autojump
+			python ./install.py
+			eval cd ~
+			sed -i '/autojump/d' ~/.zshrc
+			sed -i '/compinit/d' ~/.zshrc
+			#sed -i '/BG_NICE/d' ~/.zshrc
+			if [[ $USER == root ]]; then
+				echo "[[ -s /root/.autojump/etc/profile.d/autojump.sh ]] && source /root/.autojump/etc/profile.d/autojump.sh">>~/.zshrc
+			else
+				echo "[[ -s /home/$USER/.autojump/etc/profile.d/autojump.sh ]] && source /home/$USER/.autojump/etc/profile.d/autojump.sh">>~/.zshrc
+			fi
+			echo 'autoload -U compinit && compinit -u'>>~/.zshrc
+			#echo 'unsetopt BG_NICE'>>~/.zshrc
+		fi
+	else
+		git clone git://github.com/wting/autojump.git ${ZSH_CUSTOM}/plugins/autojump
+		cd ${ZSH_CUSTOM}/plugins/autojump
+		python ./install.py
+		eval cd ~
+		sed -i '/autojump/d' ~/.zshrc
+		sed -i '/compinit/d' ~/.zshrc
+		#sed -i '/BG_NICE/d' ~/.zshrc
+		if [[ $USER == root ]]; then
+			echo "[[ -s /root/.autojump/etc/profile.d/autojump.sh ]] && source /root/.autojump/etc/profile.d/autojump.sh">>~/.zshrc
+		else
+			echo "[[ -s /home/$USER/.autojump/etc/profile.d/autojump.sh ]] && source /home/$USER/.autojump/etc/profile.d/autojump.sh">>~/.zshrc
+		fi
+		echo 'autoload -U compinit && compinit -u'>>~/.zshrc
+		#echo 'unsetopt BG_NICE'>>~/.zshrc
+	fi
+	echo -e "$green 已添加插件 autojump$none"
+	echo
 	
-	# 重载配置
-	echo -e "$green 重载ZSH配置$none"
-	source ~/.zshrc
+	if [[ "$za_insd" = true ]]; then
+		read -p "$(echo -e "$cyan 是否重新安装插件zsh-autosuggestions(y/N):$none ")" chpo;chpo=${chpo:-n};
+		until [[ $chpo =~ ^([y]|[n]|[Y]|[N])$ ]]; do
+			read -p "$(echo -e "$cyan 是否重新安装插件zsh-autosuggestions(y/N):$none ")" chpo;chpo=${chpo:-n};
+		done
+		if [[ $chpo == y || $chpo == Y ]]; then
+			sudo rm -rf ${ZSH_CUSTOM}/plugins/zsh-autosuggestions
+			git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+		fi
+	else
+		git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+	fi
+	echo -e "$green 已添加插件 zsh-autosuggestions$none"
+	echo
+	
+	if [[ "$zshl_insd" = true ]]; then
+		read -p "$(echo -e "$cyan 是否重新安装插件zsh-syntax-highlighting(y/N):$none ")" chpo;chpo=${chpo:-n};
+		until [[ $chpo =~ ^([y]|[n]|[Y]|[N])$ ]]; do
+			read -p "$(echo -e "$cyan 是否重新安装插件zsh-syntax-highlighting(y/N):$none ")" chpo;chpo=${chpo:-n};
+		done
+		if [[ $chpo == y || $chpo == Y ]]; then
+			sudo rm -rf ${ZSH_CUSTOM}/plugins/zsh-syntax-highlighting
+			git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+		fi
+	else
+		git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+	fi
+	echo -e "$green 已添加插件 zsh-syntax-highlighting$none"
+	echo
+	
+	var="plugins=\(git extract autojump history zsh-autosuggestions zsh-syntax-highlighting)"
+	eval sed -i "/^plugins=/c'$var'" ~/.zshrc
+	[[ -s /root/.autojump/etc/profile.d/autojump.sh ]] && source /root/.autojump/etc/profile.d/autojump.sh
+
+        autoload -U compinit && compinit -u
+
+	
+	# 开启新的Z Shell继续执行
+	exec ./reload_zsh.sh
 	
 fi
 

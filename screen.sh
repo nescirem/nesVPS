@@ -33,3 +33,5 @@ else
 	fi
 fi
 
+echo 
+echo -e "$green Done.$none"

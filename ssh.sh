@@ -95,31 +95,29 @@ if [[ $chpo == y || $chpo == Y ]]; then
 	echo -e "$yellow 2. $none Ed25519"
 	echo
 	read -p "$(echo -e "请选择 [${magenta}1,2$none](默认:2): ")" _opt;_opt=${_opt:-2};
-
-	if [[ -z $_opt ]]; then
+	until  [[ $_opt =~ ^[1-9]\d*$ ]];do
+		read -p "$(echo -e "请选择 [${magenta}1,2$none](默认:2): ")" _opt;_opt=${_opt:-2};
+	done
+	case $_opt in
+	1)
+		# 创建 RSA key
+		echo "为用户$mailaddr创建RSA密钥"
+		ssh-keygen -o -t rsa -b 4096 -f ~/.ssh/id_rsa -C "$mailaddr"
+		pri_key='id_rsa'
+		pub_key='id_rsa.pub'
+		;;
+		
+	2)
+		# 创建 Ed25519 key
+		echo "为用户$mailaddr创建Ed25519密钥"
+		ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -C "$mailaddr"
+		pri_key='id_ed25519'
+		pub_key='id_ed25519.pub'
+		;;
+	*)
 		echo -e "error" && exit 1
-	else
-		case $_opt in
-		1)
-			# 创建 RSA key
-			echo "为用户$mailaddr创建RSA密钥"
-			ssh-keygen -o -t rsa -b 4096 -f ~/.ssh/id_rsa -C "$mailaddr"
-			pri_key='id_rsa'
-			pub_key='id_rsa.pub'
-			;;
-			
-		2)
-			# 创建 Ed25519 key
-			echo "为用户$mailaddr创建Ed25519密钥"
-			ssh-keygen -o -a 100 -t ed25519 -f ~/.ssh/id_ed25519 -C "$mailaddr"
-			pri_key='id_ed25519'
-			pub_key='id_ed25519.pub'
-			;;
-		*)
-			echo -e "error" && exit 1
-			;;
-		esac
-	fi
+		;;
+	esac
 
 	echo -e "安装公钥"
 	cd ~/.ssh
