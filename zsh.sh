@@ -16,15 +16,15 @@ EOF
 
 
 echo -e "$green 下载脚本reload_zsh.sh$none"
-wget -c https://gist.githubusercontent.com/nescirem/d7d60d8e43989a82b1e5e2fdf94f1674/raw/145dccfe4ab88adc2aa38bd296160ca81de65d28/reload_zsh.sh -O reload_zsh.sh
-sudo chmod +x reload_zsh.sh
+wget -c https://gist.githubusercontent.com/nescirem/d7d60d8e43989a82b1e5e2fdf94f1674/raw/145dccfe4ab88adc2aa38bd296160ca81de65d28/reload_zsh.sh -O ~/reload_zsh.sh
 cd ~
+chmod +x reload_zsh.sh
 
 echo -e "$green 当前Shell列表$none"
 sudo cat /etc/shells
 sleep 1
 echo
-sleep 2
+sleep 1
 
 # 安装zsh
 if [[ -f /usr/bin/yum ]]; then
@@ -40,11 +40,8 @@ fi
 echo -e "$green 更新包管理器列表$none"
 eval $cmd update
 echo
-echo -e "$green 安装sudo$none"
-eval $cmd install sudo
-echo
 echo -e "$green 安装ZSH$none"
-eval $cmd install zsh
+eval $cmd install zsh -y
 echo
 echo -e "$green 将用户Shell切换到ZSH$none"
 sudo usermod -s /bin/zsh $USER
@@ -117,8 +114,8 @@ if [[ "$omz_insd" = true ]]; then
 			sudo rm -rf ${ZSH_CUSTOM}/plugins/autojump
 			git clone git://github.com/wting/autojump.git ${ZSH_CUSTOM}/plugins/autojump
 			cd ${ZSH_CUSTOM}/plugins/autojump
-			python ./install.py
-			eval cd ~
+			python ./install.py >/dev/null
+			cd ~
 			sed -i '/autojump/d' ~/.zshrc
 			sed -i '/compinit/d' ~/.zshrc
 			#sed -i '/BG_NICE/d' ~/.zshrc
@@ -133,8 +130,8 @@ if [[ "$omz_insd" = true ]]; then
 	else
 		git clone git://github.com/wting/autojump.git ${ZSH_CUSTOM}/plugins/autojump
 		cd ${ZSH_CUSTOM}/plugins/autojump
-		python ./install.py
-		eval cd ~
+		python ./install.py >/dev/null
+		cd ~
 		sed -i '/autojump/d' ~/.zshrc
 		sed -i '/compinit/d' ~/.zshrc
 		#sed -i '/BG_NICE/d' ~/.zshrc
@@ -183,7 +180,7 @@ if [[ "$omz_insd" = true ]]; then
 	eval sed -i "/^plugins=/c'$var'" ~/.zshrc
 	
 	# 开启新的Z Shell继续执行
-	exec ./reload_zsh.sh
+	exec ~/reload_zsh.sh
 	
 fi
 
