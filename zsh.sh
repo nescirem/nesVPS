@@ -16,7 +16,7 @@ EOF
 
 
 echo -e "$green 下载脚本reload_zsh.sh$none"
-wget -c https://gist.githubusercontent.com/nescirem/d7d60d8e43989a82b1e5e2fdf94f1674/raw/145dccfe4ab88adc2aa38bd296160ca81de65d28/reload_zsh.sh -O ~/reload_zsh.sh
+wget -c https://raw.githubusercontent.com/nescirem/nesVPS/master/reload_zsh.sh -O ~/reload_zsh.sh
 cd ~
 chmod +x reload_zsh.sh
 
